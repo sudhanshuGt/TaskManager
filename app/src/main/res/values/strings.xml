@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">TaskManager</string>
+    <string name="default_web_client_id">722682322318-9s52j5b1soso4i2427phpuavq2pd4r6k.apps.googleusercontent.com</string>
+    <string name="title_activity_home">Home</string>
+    <string name="google_maps_key">${MAPS_API_KEY}</string>
+    <string name="title_activity_add_edit_task">AddEditTask</string>
+    <string name="title_activity_task_detail">TaskDetailActivity</string>
+</resources>
