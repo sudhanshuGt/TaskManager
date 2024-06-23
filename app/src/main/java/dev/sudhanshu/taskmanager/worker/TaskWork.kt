@@ -79,7 +79,9 @@ class TaskWorker @AssistedInject constructor(
                         latitude = task.location!!.latitude
                         longitude = task.location!!.longitude
                     })
-                    sendNotification(task, distance, applicationContext)
+                    if (!task.isCompleted) {
+                        sendNotification(task, distance, applicationContext)
+                    }
                 }
             } catch (e: Exception) {
             }
