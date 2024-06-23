@@ -11,7 +11,7 @@ Task Manager App is a mobile application built to help users manage their tasks 
 
 ## Architecture
 
-The app follows the **MVVM with Clean Architecture principles**  and for clound database used **Firebase**:
+The app follows the **MVVM with Clean Architecture principles**  and for cloud database used **Firebase**:
 
 - **Presentation Layer:** Composed of UI components built with Jetpack Compose.
 - **Domain Layer:** Contains business logic and use cases independent of the framework.
