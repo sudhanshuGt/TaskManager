@@ -19,6 +19,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.res.painterResource
@@ -57,6 +61,9 @@ fun TaskManagerScreen(
         is Resource.Success -> (userIdResource as Resource.Success).data.id
         else -> ""
     }
+
+    val coroutineScope = rememberCoroutineScope()
+    var resetSwipeState by remember { mutableStateOf(false) }
 
     // State for search functionality
     var searchText by remember { mutableStateOf("") }
@@ -217,9 +224,20 @@ fun TaskManagerScreen(
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
+                            .nestedScroll(object : NestedScrollConnection {
+                                override fun onPreScroll(
+                                    available: Offset,
+                                    source: NestedScrollSource
+                                ): Offset {
+                                    if (resetSwipeState) {
+                                        resetSwipeState = false
+                                    }
+                                    return Offset.Zero
+                                }
+                            })
                     ) {
                         items(filteredTasks) { task ->
-                            TaskCard(
+                            SwipeToDismissTaskItem(
                                 task = task,
                                 onEdit = {
                                     val intent = Intent(context, AddEditTask::class.java)
@@ -258,11 +276,13 @@ fun TaskManagerScreen(
 
                                         })
                                 },
-                                onTaskClick = {
-                                    val intent =
-                                        Intent(context, TaskDetailActivity::class.java)
+                                onTaskClicked = {
+                                    val intent = Intent(context, TaskDetailActivity::class.java)
                                     intent.putExtra("TASK_ID", it.id)
                                     context.startActivity(intent)
+                                },
+                                onReset = {
+                                    resetSwipeState = true
                                 }
                             )
                         }

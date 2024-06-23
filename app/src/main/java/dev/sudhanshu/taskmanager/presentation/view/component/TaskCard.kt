@@ -54,6 +54,9 @@ fun TaskCard(
             .clickable {
                 onTaskClick(task)
             }) {
+
+
+
             SwipeToDismiss(
                 state = dismissState,
                 directions = setOf(DismissDirection.EndToStart),

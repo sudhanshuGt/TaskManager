@@ -6,6 +6,8 @@ import android.app.NotificationManager
 import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -22,6 +24,8 @@ import dev.sudhanshu.taskmanager.util.LocationPreferences
 import dev.sudhanshu.taskmanager.util.SettingsPreferences
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.time.LocalDate
+import java.time.ZoneId
 import kotlin.math.roundToInt
 
 @HiltWorker
@@ -36,6 +40,7 @@ class TaskWorker @AssistedInject constructor(
         const val CHANNEL_NAME = "Task Notifications"
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     override suspend fun doWork(): Result {
         if (checkLocationPermission()) {
             val settingPref = SettingsPreferences(applicationContext)
@@ -58,6 +63,7 @@ class TaskWorker @AssistedInject constructor(
         ) == PackageManager.PERMISSION_GRANTED
     }
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private suspend fun fetchTasksAndNotify(
         currentLocation: Location,
         applicationContext: Context,
@@ -66,20 +72,24 @@ class TaskWorker @AssistedInject constructor(
         withContext(Dispatchers.IO) {
             try {
                 val tasks = id?.let { taskRepository.getTasksForUser(it) }
+                val today = LocalDate.now()
                 tasks?.filter { task ->
                     task.location?.let { taskLocation ->
                         val taskLocationObject = Location("").apply {
                             latitude = taskLocation.latitude
                             longitude = taskLocation.longitude
                         }
-                        currentLocation.distanceTo(taskLocationObject) <= 1000 // 1 km radius
+                        currentLocation.distanceTo(taskLocationObject) <= 1000
                     } ?: false
                 }?.forEach { task ->
                     val distance = currentLocation.distanceTo(Location("").apply {
                         latitude = task.location!!.latitude
                         longitude = task.location!!.longitude
                     })
-                    if (!task.isCompleted) {
+                    val dueDate = task.dueDate?.toDate()
+                    val localDueDate = dueDate?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()
+
+                    if (!task.isCompleted && localDueDate?.isBefore(today) == false) {
                         sendNotification(task, distance, applicationContext)
                     }
                 }

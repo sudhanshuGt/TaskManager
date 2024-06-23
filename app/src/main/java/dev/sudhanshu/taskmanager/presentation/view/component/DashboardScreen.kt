@@ -1,7 +1,12 @@
 package dev.sudhanshu.taskmanager.presentation.view.component
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.os.Build
+import androidx.annotation.RequiresApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -16,6 +21,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -23,6 +29,7 @@ import com.google.firebase.Timestamp
 import dev.sudhanshu.taskmanager.R
 import dev.sudhanshu.taskmanager.data.model.Task
 import dev.sudhanshu.taskmanager.presentation.ui.theme.Typography
+import dev.sudhanshu.taskmanager.presentation.view.TaskDetailActivity
 import dev.sudhanshu.taskmanager.presentation.viewmodel.TaskManagerViewModel
 import dev.sudhanshu.taskmanager.presentation.viewmodel.TaskViewModel
 import dev.sudhanshu.taskmanager.presentation.viewmodel.UserViewModel
@@ -30,7 +37,9 @@ import dev.sudhanshu.taskmanager.util.Resource
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.LocalDate
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DashboardScreen(
     taskViewModel: TaskManagerViewModel = hiltViewModel(),
@@ -72,16 +81,33 @@ fun DashboardScreen(
                     .padding(padding)
             ) {
                 item {
-                    tasks?.let { TaskStatisticsSection(it) }
+                    if (!tasks.isNullOrEmpty()) tasks?.let { TaskStatisticsSection(it) }
                 }
                 item {
-                    tasks?.let { UpcomingTasksSection(it) }
+                    if(!tasks.isNullOrEmpty()) tasks?.let {
+                        UpcomingTasksSection(it, onClick = { task ->
+                        val intent = Intent(context, TaskDetailActivity::class.java)
+                        intent.putExtra("TASK_ID", task.id)
+                        context.startActivity(intent)
+                    }) }
                 }
                 item {
-                    tasks?.let { PendingTasksSection(it) }
+                    if(!tasks.isNullOrEmpty()) tasks?.let { PendingTasksSection(it, onClick = { task ->
+                        val intent = Intent(context, TaskDetailActivity::class.java)
+                        intent.putExtra("TASK_ID", task.id)
+                        context.startActivity(intent)
+                    }) }
                 }
                 item {
-                    tasks?.let { CompletedTasksSection(it) }
+                    if(!tasks.isNullOrEmpty()) tasks?.let { CompletedTasksSection(it, onClick = { task ->
+                        val intent = Intent(context, TaskDetailActivity::class.java)
+                        intent.putExtra("TASK_ID", task.id)
+                        context.startActivity(intent)
+                    }) }
+                }
+
+                item {
+                    if (tasks.isNullOrEmpty()) NoTaskMessage()
                 }
             }
         }
@@ -101,17 +127,25 @@ fun TaskStatisticsSection(tasks: List<Task>) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun UpcomingTasksSection(tasks: List<Task>) {
-    val upcomingTasks = tasks.filter { !it.isCompleted }
-        .sortedBy { it.dueDate?.toDate() }
+fun UpcomingTasksSection(tasks: List<Task>, onClick: (Task) -> Unit) {
+    val today = LocalDate.now()
+    val upcomingTasks = tasks.filter { task ->
+        val dueDate = task.dueDate?.toDate()
+        dueDate?.toInstant()?.atZone(ZoneId.systemDefault())?.toLocalDate()?.isAfter(today) == true
+    }.sortedBy { it.dueDate?.toDate() }
 
     Column(modifier = Modifier.padding(16.dp)) {
         Text(text = "Upcoming Tasks", fontSize = 18.sp, style = Typography.h1)
         Spacer(modifier = Modifier.height(10.dp))
         LazyRow {
-            items(upcomingTasks) { task ->
-                TaskItem(task)
+            items(upcomingTasks.filter {
+                task -> !task.isCompleted
+            }) { task ->
+                TaskItem(task, onClick = {
+                    onClick(task)
+                })
             }
         }
     }
@@ -119,7 +153,7 @@ fun UpcomingTasksSection(tasks: List<Task>) {
 
 
 @Composable
-fun PendingTasksSection(tasks: List<Task>) {
+fun PendingTasksSection(tasks: List<Task>, onClick: (Task) -> Unit) {
     val pendingTasks = tasks.filter { !it.isCompleted }
         .sortedBy { it.dueDate?.toDate() }
 
@@ -128,14 +162,16 @@ fun PendingTasksSection(tasks: List<Task>) {
         Spacer(modifier = Modifier.height(10.dp))
         LazyRow {
             items(pendingTasks) { task ->
-                TaskItem(task)
+                TaskItem(task, onClick = {
+
+                })
             }
         }
     }
 }
 
 @Composable
-fun CompletedTasksSection(tasks: List<Task>) {
+fun CompletedTasksSection(tasks: List<Task>, onClick: (Task) -> Unit) {
     val pendingTasks = tasks.filter { it.isCompleted }
         .sortedBy { it.dueDate?.toDate() }
 
@@ -144,8 +180,34 @@ fun CompletedTasksSection(tasks: List<Task>) {
         Spacer(modifier = Modifier.height(10.dp))
         LazyRow {
             items(pendingTasks) { task ->
-                TaskItem(task)
+                TaskItem(task, onClick = {
+                    onClick(task)
+                })
             }
+        }
+    }
+}
+
+@Composable
+fun NoTaskMessage(){
+    Box(
+        modifier = Modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Image(
+                painter = painterResource(id = R.drawable.no_task),
+                contentDescription = "No Tasks",
+                modifier = Modifier.size(128.dp)
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = "No tasks available",
+                style = MaterialTheme.typography.h6,
+                textAlign = TextAlign.Center
+            )
         }
     }
 }
@@ -153,11 +215,13 @@ fun CompletedTasksSection(tasks: List<Task>) {
 
 
 @Composable
-fun TaskItem(task: Task) {
+fun TaskItem(task: Task, onClick: (Task) -> Unit) {
     Card(
         shape = RoundedCornerShape(6.dp),
         elevation = 4.dp,
-        modifier = Modifier.padding(10.dp, 6.dp)
+        modifier = Modifier.padding(10.dp, 6.dp).clickable {
+            onClick(task)
+        }
     ) {
         Column(
             modifier = Modifier.padding(20.dp, 6.dp)
@@ -207,6 +271,7 @@ fun TaskItem(task: Task) {
         }
     }
 }
+
 
 @SuppressLint("NewApi")
 private fun formatDueDate(dueDate: Timestamp?): String {

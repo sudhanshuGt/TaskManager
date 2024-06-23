@@ -24,9 +24,9 @@ fun TaskPriorityPieChart(
 
     // Preparing the PieEntries
     val entries = listOf(
-        PieEntry(highPriorityCount.toFloat(), "High"),
-        PieEntry(mediumPriorityCount.toFloat(), "Medium"),
-        PieEntry(lowPriorityCount.toFloat(), "Low")
+        if (highPriorityCount >= 1) PieEntry(highPriorityCount.toFloat(), "High") else PieEntry(0f, "High"),
+        if(mediumPriorityCount >= 1) PieEntry(mediumPriorityCount.toFloat(), "Medium") else PieEntry(0f, "Medium"),
+        if(lowPriorityCount >= 1) PieEntry(lowPriorityCount.toFloat(), "Low") else PieEntry(0f, "Low")
     )
 
     // Creating the PieDataSet and PieData

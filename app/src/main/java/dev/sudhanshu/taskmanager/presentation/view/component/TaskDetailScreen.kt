@@ -1,6 +1,8 @@
 package dev.sudhanshu.taskmanager.presentation.view.component
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -107,7 +109,14 @@ fun TaskDetailScreen(
             content = { padding ->
                 task?.let {
                     padding.calculateTopPadding()
-                    TaskDetailContent(task!!, taskViewModel, taskManagerViewModel, onTaskDelete, onEditTask, onTaskUpdate = { refreshTrigger = it })
+                    TaskDetailContent(task!!, taskViewModel, taskManagerViewModel, onTaskDelete, onEditTask, onTaskUpdate = { refreshTrigger = it }, onMapCLick = {
+                        val geoUri = "geo:${it.location?.longitude},${it.location?.longitude}"
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(geoUri))
+                        intent.setPackage("com.google.android.apps.maps")
+                        if (intent.resolveActivity(context.packageManager) != null) {
+                            context.startActivity(intent)
+                        }
+                    })
                 }
             }
         )
@@ -121,7 +130,8 @@ private fun TaskDetailContent(
     taskManagerViewModel: TaskManagerViewModel,
     onTaskDelete: () -> Unit,
     onEditTask: (Task) -> Unit,
-    onTaskUpdate: (Boolean) -> Unit
+    onTaskUpdate: (Boolean) -> Unit,
+    onMapCLick: (Task) -> Unit
 ) {
     var isCompleted by remember { mutableStateOf(task.isCompleted) }
     val context = LocalContext.current
@@ -180,7 +190,7 @@ private fun TaskDetailContent(
                     .height(200.dp)
                     .padding(bottom = 16.dp),
                 onMapClick = {
-                    onEditTask(task)
+                    onMapCLick(task)
                 },
                 cameraPositionState = cameraPositionState
             ) {
