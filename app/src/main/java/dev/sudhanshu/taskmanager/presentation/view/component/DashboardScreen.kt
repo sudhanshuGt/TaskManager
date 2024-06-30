@@ -11,24 +11,29 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.Typography
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.startActivity
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.firebase.Timestamp
 import dev.sudhanshu.taskmanager.R
 import dev.sudhanshu.taskmanager.data.model.Task
 import dev.sudhanshu.taskmanager.presentation.ui.theme.Typography
+import dev.sudhanshu.taskmanager.presentation.view.AddEditTask
 import dev.sudhanshu.taskmanager.presentation.view.TaskDetailActivity
 import dev.sudhanshu.taskmanager.presentation.viewmodel.TaskManagerViewModel
 import dev.sudhanshu.taskmanager.presentation.viewmodel.TaskViewModel
@@ -145,6 +150,10 @@ fun UpcomingTasksSection(tasks: List<Task>, onClick: (Task) -> Unit) {
             }) { task ->
                 TaskItem(task, onClick = {
                     onClick(task)
+                }, onDeleteClick = {
+                    onClick(task)
+                }, onEditClick = {
+                    onClick(task)
                 })
             }
         }
@@ -164,6 +173,10 @@ fun PendingTasksSection(tasks: List<Task>, onClick: (Task) -> Unit) {
             items(pendingTasks) { task ->
                 TaskItem(task, onClick = {
 
+                }, onDeleteClick = {
+                    onClick(task)
+                }, onEditClick = {
+                    onClick(task)
                 })
             }
         }
@@ -182,6 +195,10 @@ fun CompletedTasksSection(tasks: List<Task>, onClick: (Task) -> Unit) {
             items(pendingTasks) { task ->
                 TaskItem(task, onClick = {
                     onClick(task)
+                }, onDeleteClick = {
+                    onClick(task)
+                }, onEditClick = {
+                    onClick(task)
                 })
             }
         }
@@ -195,7 +212,8 @@ fun NoTaskMessage(){
         contentAlignment = Alignment.Center
     ) {
         Column(
-            horizontalAlignment = Alignment.CenterHorizontally
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
         ) {
             Image(
                 painter = painterResource(id = R.drawable.no_task),
@@ -215,20 +233,23 @@ fun NoTaskMessage(){
 
 
 @Composable
-fun TaskItem(task: Task, onClick: (Task) -> Unit) {
+fun TaskItem(task: Task, onClick: (Task) -> Unit, onEditClick: () -> Unit, onDeleteClick: () -> Unit) {
     Card(
-        shape = RoundedCornerShape(6.dp),
+        shape = RoundedCornerShape(20.dp),
         elevation = 4.dp,
-        modifier = Modifier.padding(10.dp, 6.dp).clickable {
-            onClick(task)
-        }
+        modifier = Modifier
+            .padding(10.dp)
+            .width(250.dp)
+            .clickable { onClick(task) }
     ) {
         Column(
-            modifier = Modifier.padding(20.dp, 6.dp)
+            modifier = Modifier.padding(20.dp)
         ) {
             Text(
                 text = task.title,
                 style = Typography.h2,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 fontSize = 16.sp
             )
             Spacer(modifier = Modifier.height(10.dp))
@@ -266,11 +287,44 @@ fun TaskItem(task: Task, onClick: (Task) -> Unit) {
                     color = priorityColor(priority = task.priority),
                     fontSize = 14.sp
                 )
-            }
 
+                Spacer(modifier = Modifier.weight(1f))
+
+                Icon(
+                    painter = painterResource(id = R.drawable.delete),
+                    contentDescription = "Delete Icon",
+                    tint = Color.Black,
+                    modifier = Modifier
+                        .size(24.dp)
+                        .clip(CircleShape)
+                        .background(MaterialTheme.colors.onSecondary)
+                        .padding(4.dp)
+                        .clickable { onDeleteClick() }
+                )
+
+                Spacer(modifier = Modifier.width(10.dp))
+
+                if (!task.isCompleted) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.edit),
+                        contentDescription = "Edit Icon",
+                        tint = Color.Black,
+                        modifier = Modifier
+                            .size(24.dp)
+                            .clip(CircleShape)
+                            .background(MaterialTheme.colors.onSecondary)
+                            .padding(4.dp)
+                            .clickable { onEditClick() }
+                    )
+                }
+            }
         }
     }
+
+
 }
+
+
 
 
 @SuppressLint("NewApi")

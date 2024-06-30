@@ -105,7 +105,7 @@ fun MyCard(onGoogleSignInClick: () -> Unit) {
             .fillMaxWidth()
             .clickable(onClick = onGoogleSignInClick),
         shape = RoundedCornerShape(50.dp),
-        backgroundColor = Color.Black
+        backgroundColor = Color(0xFFE5FF7F)
     ) {
         Row(
             modifier = Modifier
@@ -126,8 +126,8 @@ fun MyCard(onGoogleSignInClick: () -> Unit) {
             Text(
                 text = "Sign in with Google",
                 fontSize = 16.sp,
-                color = Color.White,
-                style = MaterialTheme.typography.subtitle1
+                color = Color.Black,
+                style = MaterialTheme.typography.h2
             )
         }
     }

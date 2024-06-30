@@ -8,6 +8,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -25,6 +27,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.google.android.gms.maps.model.LatLng
 import com.google.firebase.Timestamp
 import com.google.maps.android.compose.GoogleMap
 import com.google.maps.android.compose.Marker
@@ -136,141 +139,185 @@ private fun TaskDetailContent(
     var isCompleted by remember { mutableStateOf(task.isCompleted) }
     val context = LocalContext.current
 
-    Column(
+    LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(16.dp)
             .background(MaterialTheme.colors.background)
     ) {
-        Text(
-            text = task.title,
-            style = Typography.h1,
-            fontSize = 24.sp,
-            color = MaterialTheme.colors.onBackground,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+       item {
+           TaskSectionCard(title = "Task Title") {
+               Text(
+                   text = task.title,
+                   style = Typography.h1,
+                   fontSize = 24.sp,
+                   color = MaterialTheme.colors.onBackground
+               )
+           }
+       }
 
-        Text(
-            text = task.description ?: "No description provided",
-            style = Typography.h4,
-            fontSize = 16.sp,
-            color = MaterialTheme.colors.onBackground,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
+       item {
+           TaskSectionCard(title = "Description") {
+               Text(
+                   text = task.description ?: "No description provided",
+                   style = Typography.h4,
+                   fontSize = 16.sp,
+                   color = MaterialTheme.colors.onBackground
+               )
+           }
+       }
 
-        Text(
-            text = "Due Date: ${formatDueDate(task.dueDate)}",
-            style = Typography.h3,
-            fontSize = 16.sp,
-            color = MaterialTheme.colors.onBackground,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
-
-        Text(
-            text = "Priority: ${task.priority}",
-            style = Typography.h3.copy(color = priorityColor(task.priority)),
-            fontSize = 16.sp,
-            modifier = Modifier.padding(bottom = 16.dp)
-        )
-
-        if (task.location != null) {
-            val cameraPositionState = rememberCameraPositionState {
-                position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
-                    com.google.android.gms.maps.model.LatLng(task.location!!.latitude, task.location!!.longitude), 15f
-                )
-            }
-
-            val markerState = rememberMarkerState(
-                position = com.google.android.gms.maps.model.LatLng(task.location!!.latitude, task.location!!.longitude)
-            )
-
-            GoogleMap(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(200.dp)
-                    .padding(bottom = 16.dp),
-                onMapClick = {
-                    onMapCLick(task)
-                },
-                cameraPositionState = cameraPositionState
-            ) {
-                Marker(
-                    state = markerState,
-                    title = task.title,
-                    draggable = false
-                )
-            }
-        }
-
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-
-
-            Switch(
-                checked = isCompleted,
-                onCheckedChange = { isChecked ->
-                    if (!task.isCompleted) {
-                        isCompleted = isChecked
-                        task.isCompleted = isChecked
-                        taskViewModel.updateTask(task, onSuccess = {
-                            onTaskUpdate(isChecked)
-                        }, onFailure = {
-                            Toast.makeText(context, "Error updating task", Toast.LENGTH_SHORT).show()
-                        })
-                    }
-                }
-            )
-
-            Spacer(modifier = Modifier.width(10.dp))
-            Text(
-                text = if (task.isCompleted) "Task is completed" else "Mark as completed",
-                color = Color.Gray,
-                fontSize = 14.sp,
-                style = Typography.h3
-            )
-        }
-
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            if (!task.isCompleted) {
-                Button(
-                    onClick = {
-                        onEditTask(task)
-                    },
-                    modifier = Modifier
-                        .padding(vertical = 10.dp, horizontal = 20.dp)
-                        .clip(MaterialTheme.shapes.medium)
-                        .background(MaterialTheme.colors.background)
-                ) {
-                    Text(
-                        text = "Edit Task",
-                        color = MaterialTheme.colors.onBackground,
-                        fontSize = 14.sp,
-                        style = Typography.h3
-                    )
-                }
-            }
-
-            Button(
-                onClick = {
-                    taskManagerViewModel.deleteUserTask(task.id, onSuccess = {
-                        onTaskDelete()
-                    }, onError = {})
-                },
-                modifier = Modifier
-                    .padding(vertical = 10.dp, horizontal = 20.dp)
-                    .clip(MaterialTheme.shapes.medium)
-                    .background(MaterialTheme.colors.background)
-            ) {
+        item {
+            TaskSectionCard(title = "Due Date") {
                 Text(
-                    text = "Delete Task",
-                    color = MaterialTheme.colors.onBackground,
-                    fontSize = 14.sp,
-                    style = Typography.h3
+                    text = formatDueDate(task.dueDate),
+                    style = Typography.h3,
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colors.onBackground
                 )
             }
+        }
+
+       item {
+           TaskSectionCard(title = "Priority") {
+               Text(
+                   text = task.priority,
+                   style = Typography.h3.copy(color = priorityColor(task.priority)),
+                   fontSize = 16.sp
+               )
+           }
+       }
+
+       item {
+           if (task.location != null) {
+               TaskSectionCard(title = "Location") {
+                   val cameraPositionState = rememberCameraPositionState {
+                       position = com.google.android.gms.maps.model.CameraPosition.fromLatLngZoom(
+                           LatLng(task.location!!.latitude, task.location!!.longitude), 15f
+                       )
+                   }
+
+                   val markerState = rememberMarkerState(
+                       position = LatLng(task.location!!.latitude, task.location!!.longitude)
+                   )
+
+                   GoogleMap(
+                       modifier = Modifier
+                           .fillMaxWidth()
+                           .height(200.dp)
+                           .clip(RoundedCornerShape(20.dp)),
+                       onMapClick = {
+
+                       },
+                       cameraPositionState = cameraPositionState
+                   ) {
+                       Marker(
+                           state = markerState,
+                           title = task.title,
+                           draggable = false
+                       )
+                   }
+               }
+           }
+       }
+
+      item {
+          Row(
+              modifier = Modifier.fillMaxWidth(),
+              verticalAlignment = Alignment.CenterVertically
+          ) {
+              Switch(
+                  checked = isCompleted,
+                  onCheckedChange = { isChecked ->
+                      if (!task.isCompleted) {
+                          isCompleted = isChecked
+                          task.isCompleted = isChecked
+                          taskViewModel.updateTask(task, onSuccess = {
+                              onTaskUpdate(isChecked)
+                          }, onFailure = {
+                              Toast.makeText(context, "Error updating task", Toast.LENGTH_SHORT).show()
+                          })
+                      }
+                  }
+              )
+              Spacer(modifier = Modifier.width(10.dp))
+              Text(
+                  text = if (task.isCompleted) "Task is completed" else "Mark as completed",
+                  color = Color.Gray,
+                  fontSize = 14.sp,
+                  style = Typography.h3
+              )
+          }
+
+          Row(
+              modifier = Modifier.fillMaxWidth(),
+              horizontalArrangement = Arrangement.spacedBy(16.dp)
+          ) {
+              if (!task.isCompleted) {
+                  Button(
+                      onClick = {
+                          onEditTask(task)
+                      },
+                      modifier = Modifier
+                          .padding(16.dp)
+                          .weight(1f)
+                          .clip(RoundedCornerShape(20.dp))
+                          .height(46.dp),
+                      colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFE5FF7F)),
+                      elevation = ButtonDefaults.elevation(4.dp)
+                  ) {
+                      Text(
+                          text = "Edit Task",
+                          color = Color.Black,
+                          fontSize = 14.sp,
+                          style = Typography.h2
+                      )
+                  }
+              }
+
+              Button(
+                  onClick = {
+                      taskManagerViewModel.deleteUserTask(task.id, onSuccess = {
+                          onTaskDelete()
+                      }, onError = {})
+                  },
+                  modifier = Modifier
+                      .padding(16.dp)
+                      .weight(1f)
+                      .clip(RoundedCornerShape(20.dp))
+                      .height(46.dp),
+                  colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFE5FF7F)),
+                  elevation = ButtonDefaults.elevation(4.dp)
+              ) {
+                  Text(
+                      text = "Delete Task",
+                      color = Color.Black,
+                      fontSize = 14.sp,
+                      style = Typography.h2
+                  )
+              }
+          }
+      }
+    }
+}
+
+@Composable
+fun TaskSectionCard(title: String, content: @Composable () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(bottom = 16.dp),
+        elevation = 4.dp
+    ) {
+        Column(modifier = Modifier.padding(16.dp)) {
+            Text(
+                text = title,
+                style = Typography.h6,
+                color = MaterialTheme.colors.onBackground,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            content()
         }
     }
 }

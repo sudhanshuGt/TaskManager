@@ -9,6 +9,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
@@ -20,6 +21,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -124,9 +126,10 @@ fun TaskManagerScreen(
                 onClick = {
                     val intent = Intent(context, AddEditTask::class.java)
                     context.startActivity(intent)
-                }
+                },
+                backgroundColor = Color(0xFFE5FF7F)
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add Task")
+                Icon(Icons.Default.Add, contentDescription = "Add Task", tint = Color.Black)
             }
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
@@ -139,49 +142,12 @@ fun TaskManagerScreen(
                 .padding(horizontal = 0.dp)
         ) {
             // Search box
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 20.dp)
-            ) {
+            Spacer(modifier = Modifier.height(10.dp))
+            SearchTextField(searchText = searchText, onValueChange = {
+                searchText = it
+            })
+            Spacer(modifier = Modifier.height(10.dp))
 
-
-                TextField(
-                    value = searchText,
-                    onValueChange = {searchText = it},
-                    leadingIcon = {
-                        Icon(
-                            imageVector = Icons.Default.Search,
-                            contentDescription = null
-                        )
-                    },
-                    colors = TextFieldDefaults.textFieldColors(
-                        backgroundColor = MaterialTheme.colors.background, textColor = MaterialTheme.colors.onBackground
-
-                    ),
-                    placeholder = {
-                        Text("Search your task ")
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(20.dp, 0.dp)
-                        .heightIn(min = 56.dp)
-                )
-
-                // Clear button
-                if (searchText.isNotEmpty()) {
-                    Icon(
-                        imageVector = Icons.Default.Clear,
-                        contentDescription = "Clear",
-                        tint = MaterialTheme.colors.onSurface.copy(alpha = ContentAlpha.medium),
-                        modifier = Modifier
-                            .clickable {
-                                searchText = ""
-                            }
-                            .padding(horizontal = 8.dp)
-                    )
-                }
-            }
 
             // Task list
             if (isLoading) {
@@ -291,5 +257,34 @@ fun TaskManagerScreen(
             }
         }
     }
+}
+
+@Composable
+fun SearchTextField(searchText: String, onValueChange: (String) -> Unit) {
+    OutlinedTextField(
+        value = searchText,
+        onValueChange = { onValueChange(it) },
+        leadingIcon = {
+            Icon(
+                imageVector = Icons.Default.Search,
+                contentDescription = "Search icon"
+            )
+        },
+        placeholder = {
+            Text("Search your task")
+        },
+        colors = TextFieldDefaults.outlinedTextFieldColors(
+            focusedBorderColor = MaterialTheme.colors.onBackground,
+            unfocusedBorderColor = MaterialTheme.colors.onBackground,
+            textColor = MaterialTheme.colors.onBackground,
+            backgroundColor = MaterialTheme.colors.background,
+            cursorColor = MaterialTheme.colors.onBackground
+        ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 20.dp)
+            .heightIn(min = 56.dp),
+        shape = RoundedCornerShape(20.dp)
+    )
 }
 

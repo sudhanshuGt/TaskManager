@@ -4,7 +4,9 @@ import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.*
+import androidx.compose.material.Typography
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
@@ -16,11 +18,14 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.google.firebase.Timestamp
 import com.google.firebase.firestore.GeoPoint
 import dev.sudhanshu.taskmanager.R
 import dev.sudhanshu.taskmanager.data.model.Task
+import dev.sudhanshu.taskmanager.presentation.ui.theme.ThemeManager
+import dev.sudhanshu.taskmanager.presentation.ui.theme.Typography
 import dev.sudhanshu.taskmanager.presentation.viewmodel.TaskViewModel
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
@@ -83,163 +88,268 @@ fun AddEditTaskScreen(
     val bottomSheetState = rememberBottomSheetScaffoldState()
     val coroutineScope = rememberCoroutineScope()
 
+
     BottomSheetScaffold(
         scaffoldState = bottomSheetState,
+
         sheetContent = {
-            MapScreen { selectedGeoPoint ->
-                location = selectedGeoPoint
-                coroutineScope.launch {
-                    bottomSheetState.bottomSheetState.collapse()
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(600.dp)
+                    .background(MaterialTheme.colors.background)
+            ) {
+                MapScreen { selectedGeoPoint ->
+                    location = selectedGeoPoint
+                    coroutineScope.launch {
+                        bottomSheetState.bottomSheetState.collapse()
+                    }
                 }
+
             }
         },
         sheetPeekHeight = 0.dp
     ) {
         Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(if (taskId == null) "Add Task" else "Edit Task")},
-                    modifier = Modifier.background(MaterialTheme.colors.background),
-                    navigationIcon = {
-                        IconButton(onClick = onBack) {
-                            Icon(Icons.Default.ArrowBack, contentDescription = "Back")
-                        }
-                    },
-                    backgroundColor = MaterialTheme.colors.background
-                )
-            },
             content = { padding ->
-                Column(
-                    modifier = Modifier
-                        .padding(padding)
-                        .padding(16.dp)
-                        .fillMaxSize(),
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    OutlinedTextField(
-                        value = title,
-                        onValueChange = { title = it },
-                        label = { Text("Title") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = description,
-                        onValueChange = { description = it },
-                        label = { Text("Description") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                    OutlinedTextField(
-                        value = formattedDate.value,
-                        onValueChange = { /* no-op */ },
-                        label = { Text("Due Date") },
-                        trailingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.calendar),
-                                contentDescription = "Select date",
-                                modifier = Modifier.clickable {
-                                    datePickerDialog.show()
-                                }
-                                    .padding(20.dp, 0.dp).size(24.dp)
-                            )
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { datePickerDialog.show() },
-                        readOnly = true
-                    )
-                    var expanded by remember { mutableStateOf(false) }
-                    Box(modifier = Modifier.fillMaxWidth()) {
-                        OutlinedTextField(
-                            value = priority,
-                            onValueChange = { /* no-op */ },
-                            label = { Text("Priority") },
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .clickable { expanded = true },
-                            readOnly = true,
-                            trailingIcon = {
-                                Icon(
-                                    Icons.Default.ArrowBack,
-                                    contentDescription = "Select Priority",
-                                    modifier = Modifier.clickable { expanded = true }
-                                        .padding(20.dp, 0.dp).size(24.dp)
-                                )
-                            }
-                        )
-                        DropdownMenu(
-                            expanded = expanded,
-                            onDismissRequest = { expanded = false },
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            priorities.forEach { priorityLevel ->
-                                DropdownMenuItem(onClick = {
-                                    priority = priorityLevel
-                                    expanded = false
-                                }) {
-                                    Text(text = priorityLevel)
-                                }
-                            }
-                        }
-                    }
-                    OutlinedTextField(
-                        value = location?.toString() ?: "",
-                        onValueChange = { /* no-op */ },
-                        label = { Text("Location") },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                coroutineScope.launch {
-                                    bottomSheetState.bottomSheetState.expand()
-                                }
-                            },
-                        readOnly = true,
-                        trailingIcon = {
-                            Icon(
-                                painter = painterResource(id = R.drawable.marker),
-                                contentDescription = "Select Location",
-                                modifier = Modifier.clickable {
-                                    coroutineScope.launch {
-                                        bottomSheetState.bottomSheetState.expand()
-                                    }
-                                }
-                                    .padding(20.dp, 0.dp).size(24.dp)
-                            )
-                        }
-                    )
-                    Button(
-                        onClick = {
-                            if (taskId == null) {
-                                val task = viewModel.addTask(
-                                    title, description, dueDate, priority, location, id,
-                                    onSuccess = {
-                                        onTaskSaved()
-                                    },
-                                    onFailure = {
-                                        Toast.makeText(context, "Something went wrong!", Toast.LENGTH_LONG).show()
-                                    }
-                                )
-                            } else {
-                                viewModel.updateTask(
-                                    Task(taskId, title, description, dueDate, priority, location, id),
-                                    onSuccess = { onTaskSaved() },
-                                    onFailure = { /* Handle failure */ }
-                                )
-                            }
-                        },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 16.dp, horizontal = 32.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                            .background(MaterialTheme.colors.primary)
-                            .align(Alignment.End)
-                    ) {
-                        Text(
-                            text = if (taskId == null) "Add Task" else "Update Task",
-                            color = Color.White,
-                            style = MaterialTheme.typography.button
-                        )
-                    }
-                }
+              Box(modifier = Modifier
+                  .fillMaxSize()
+                  .padding(padding)){
+                  Card (modifier = Modifier.padding(10.dp).wrapContentHeight(),
+                      backgroundColor = Color.White,
+                      shape = RoundedCornerShape(20.dp),
+                      elevation = 4.dp){
+                      Column(
+                          modifier = Modifier
+                              .padding(padding)
+                              .padding(16.dp, 20.dp)
+                              .wrapContentHeight()
+                              .background(Color.White),
+                          verticalArrangement = Arrangement.spacedBy(20.dp)
+                      ) {
+
+                          Row(
+                              verticalAlignment = Alignment.CenterVertically,
+                              horizontalArrangement = Arrangement.SpaceBetween,
+                              modifier = Modifier.fillMaxWidth()
+                          ) {
+                              IconButton(onClick = onBack) {
+                                  Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
+                              }
+                              Text(
+                                  text = if (taskId == null) "Add Task" else "Edit Task",
+                                  modifier = Modifier.align(Alignment.CenterVertically),
+                                  style = Typography.h2,
+                                  color = Color.Black,
+                                  fontSize = 18.sp
+                              )
+                              Spacer(modifier = Modifier.width(48.dp))
+                          }
+
+                          OutlinedTextField(
+                              value = title,
+                              onValueChange = { title = it },
+                              label = { Text("Title", color = Color.Black) },
+                              maxLines = 1,
+                              shape = RoundedCornerShape(20.dp),
+                              colors = TextFieldDefaults.outlinedTextFieldColors(
+                                  textColor = Color.Black,
+                                  cursorColor = Color.Black,
+                                  focusedBorderColor = Color.Black,
+                                  unfocusedBorderColor = Color.Black
+                              ),
+                              modifier = Modifier
+                                  .fillMaxWidth()
+                                  .height(60.dp)
+                          )
+
+                          OutlinedTextField(
+                              value = description,
+                              onValueChange = { description = it },
+                              label = { Text("Description", color = Color.Black) },
+                              maxLines = 1,
+                              shape = RoundedCornerShape(20.dp),
+                              colors = TextFieldDefaults.outlinedTextFieldColors(
+                                  textColor = Color.Black,
+                                  cursorColor = Color.Black,
+                                  focusedBorderColor = Color.Black,
+                                  unfocusedBorderColor = Color.Black
+                              ),
+                              modifier = Modifier
+                                  .fillMaxWidth()
+                                  .height(60.dp)
+                          )
+
+                          Row(
+                              modifier = Modifier.fillMaxWidth(),
+                              horizontalArrangement = Arrangement.spacedBy(16.dp) // Adjust the spacing as needed
+                          ) {
+                              OutlinedTextField(
+                                  value = formattedDate.value,
+                                  onValueChange = { /* no-op */ },
+                                  label = { Text("Due Date", color = Color.Black) },
+                                  maxLines = 1,
+                                  shape = RoundedCornerShape(20.dp),
+                                  trailingIcon = {
+                                      Icon(
+                                          painter = painterResource(id = R.drawable.calendar),
+                                          contentDescription = "Select date",
+                                          tint = Color.Black,
+                                          modifier = Modifier
+                                              .clickable {
+                                                  datePickerDialog.show()
+                                              }
+                                              .padding(20.dp, 0.dp)
+                                              .size(24.dp)
+                                      )
+                                  },
+                                  colors = TextFieldDefaults.outlinedTextFieldColors(
+                                      textColor = Color.Black,
+                                      cursorColor = Color.Black,
+                                      focusedBorderColor = Color.Black,
+                                      unfocusedBorderColor = Color.Black
+                                  ),
+                                  modifier = Modifier
+                                      .weight(1f)
+                                      .height(60.dp)
+                                      .clickable { datePickerDialog.show() },
+                                  readOnly = true
+                              )
+
+                              var expanded by remember { mutableStateOf(false) }
+                              Box(modifier = Modifier
+                                  .weight(1f)
+                              ) {
+                                  OutlinedTextField(
+                                      value = priority,
+                                      onValueChange = { /* no-op */ },
+                                      label = { Text("Priority", color = Color.Black) },
+                                      maxLines = 1,
+                                      shape = RoundedCornerShape(20.dp),
+                                      trailingIcon = {
+                                          Icon(
+                                              Icons.Default.ArrowBack,
+                                              contentDescription = "Select Priority",
+                                              tint = Color.Black,
+                                              modifier = Modifier
+                                                  .clickable { expanded = true }
+                                                  .padding(20.dp, 0.dp)
+                                                  .size(24.dp)
+                                          )
+                                      },
+                                      colors = TextFieldDefaults.outlinedTextFieldColors(
+                                          textColor = Color.Black,
+                                          cursorColor = Color.Black,
+                                          focusedBorderColor = Color.Black,
+                                          unfocusedBorderColor = Color.Black
+                                      ),
+                                      modifier = Modifier
+                                          .fillMaxWidth()
+                                          .height(60.dp)
+                                          .clickable { expanded = true },
+                                      readOnly = true
+                                  )
+
+                                  DropdownMenu(
+                                      expanded = expanded,
+                                      onDismissRequest = { expanded = false },
+                                      modifier = Modifier.fillMaxWidth()
+                                  ) {
+                                      priorities.forEach { priorityLevel ->
+                                          DropdownMenuItem(onClick = {
+                                              priority = priorityLevel
+                                              expanded = false
+                                          }) {
+                                              Text(text = priorityLevel)
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+
+                          OutlinedTextField(
+                              value = location?.toString() ?: "",
+                              onValueChange = { /* no-op */ },
+                              label = { Text("Location", color = Color.Black) },
+                              maxLines = 1,
+                              shape = RoundedCornerShape(20.dp),
+                              trailingIcon = {
+                                  Icon(
+                                      painter = painterResource(id = R.drawable.marker),
+                                      contentDescription = "Select Location",
+                                      tint = Color.Black,
+                                      modifier = Modifier
+                                          .clickable {
+                                              coroutineScope.launch {
+                                                  bottomSheetState.bottomSheetState.expand()
+                                              }
+                                          }
+                                          .padding(20.dp, 0.dp)
+                                          .size(24.dp)
+                                  )
+                              },
+                              colors = TextFieldDefaults.outlinedTextFieldColors(
+                                  textColor = Color.Black,
+                                  cursorColor = Color.Black,
+                                  focusedBorderColor = Color.Black,
+                                  unfocusedBorderColor = Color.Black
+                              ),
+                              modifier = Modifier
+                                  .fillMaxWidth()
+                                  .height(60.dp)
+                                  .clickable {
+                                      coroutineScope.launch {
+                                          bottomSheetState.bottomSheetState.expand()
+                                      }
+                                  },
+                              readOnly = true
+                          )
+                      }
+
+                  }
+
+
+
+                  Button(
+                      onClick = {
+                          if (taskId == null ) {
+                              if(title.isNotEmpty()){
+                                  viewModel.addTask(
+                                      title, description, dueDate, priority, location, id,
+                                      onSuccess = { onTaskSaved() },
+                                      onFailure = {
+                                          Toast.makeText(context, "Something went wrong!", Toast.LENGTH_LONG).show()
+                                      }
+                                  )
+                              }
+
+                          } else {
+                             if(title.isNotEmpty()){
+                                 viewModel.updateTask(
+                                     Task(taskId, title, description, dueDate, priority, location, id),
+                                     onSuccess = { onTaskSaved() },
+                                     onFailure = { /* Handle failure */ }
+                                 )
+                             }
+                          }
+                      },
+                      modifier = Modifier
+                          .align(Alignment.BottomCenter)
+                          .padding(16.dp)
+                          .clip(RoundedCornerShape(20.dp))
+                          .height(66.dp)
+                          .fillMaxWidth(),
+                      colors = ButtonDefaults.buttonColors(backgroundColor = Color(0xFFE5FF7F)),
+                      elevation = ButtonDefaults.elevation(4.dp)
+                  ) {
+                      Text(
+                          text = if (taskId == null) "Add Task" else "Update Task",
+                          style = Typography.h1,
+                          color = Color.Black,
+                          fontSize = 16.sp
+                      )
+                  }
+              }
             }
         )
     }

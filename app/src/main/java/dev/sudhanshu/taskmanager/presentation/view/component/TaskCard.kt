@@ -13,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -49,8 +50,9 @@ fun TaskCard(
 
     TaskManagerTheme {
         Box(modifier = Modifier
-            .padding(0.dp, 0.dp)
+            .padding(20.dp, 10.dp)
             .background(MaterialTheme.colors.background)
+            .clip(RoundedCornerShape(20.dp))
             .clickable {
                 onTaskClick(task)
             }) {
@@ -66,6 +68,7 @@ fun TaskCard(
                         modifier = Modifier
                             .fillMaxSize()
                             .background(Color.Transparent),
+
                         contentAlignment = Alignment.CenterEnd
                     ) {
                         Row(
@@ -124,8 +127,9 @@ fun TaskCard(
                 },
                 dismissContent = {
                     Card(
-                        shape = RoundedCornerShape(0.dp),
+                        shape = RoundedCornerShape(20.dp),
                         elevation = 2.dp,
+                        backgroundColor = MaterialTheme.colors.background,
                         modifier = Modifier
                     ) {
                         Column(
