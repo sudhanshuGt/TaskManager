@@ -34,7 +34,7 @@ Include screenshots of different screens here to showcase the app's UI.
     <td><img src="https://github.com/sudhanshuGt/TaskManager/blob/main/screen_shots/Login.png" alt="Login Screen" height="520" width="324"></td>
     <td><img src="https://github.com/sudhanshuGt/TaskManager/blob/main/screen_shots/home.png" alt="Home Screen" height="520" width="324"></td>
     <td><img src="https://github.com/sudhanshuGt/TaskManager/blob/main/screen_shots/dashboard.png" alt="Dashboard Screen" height="520" width="324"></td>
-    <td><img src="https://github.com/sudhanshuGt/TaskManager/blob/main/screen_shots/setting.png" alt="Settings Screen" height="520" width="324"></td>
+    <td><img src="https://github.com/sudhanshuGt/TaskManager/blob/main/screen_shots/add_task.png" alt="Settings Screen" height="520" width="324"></td>
     <td><img src="https://github.com/sudhanshuGt/TaskManager/blob/main/screen_shots/task_detail.png" alt="Edit Option Screen" height="520" width="524"></td>
   </tr>
 </table>
