@@ -23,7 +23,7 @@ The app follows the MVVM (Model-View-ViewModel) architecture with Clean Architec
 
 ## VIDEO LINK
 
-[Watch the video](https://drive.google.com/file/d/1XjmPxuoYDj2u1X845oL9pEPoZL9IQd2F/view?usp=sharing)
+[Watch the video](https://drive.google.com/file/d/18n4Ww-E84pBy86hdTDIfyl0eCEa71zYl/view?usp=sharing)
 
 ## Screenshots
 
